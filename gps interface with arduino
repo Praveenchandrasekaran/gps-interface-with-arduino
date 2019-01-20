@@ -1,0 +1,65 @@
+#include <SoftwareSerial.h>
+#include <TinyGPS.h>
+float lat = 10.219853,lon = 122.883330; // create variable for latitude and longitude object
+SoftwareSerial gpsSerial(3,4);//rx,tx
+SoftwareSerial mSerial(2,5);
+
+TinyGPS gps; // create gps object
+String latitude, longitude;
+void setup(){
+Serial.begin(9600); // connect serial
+//Serial.println("The GPS Received Signal:");
+gpsSerial.begin(9600); // connect gps sensor
+
+}
+
+void loop(){
+while(gpsSerial.available()){ // check for gps data
+if(gps.encode(gpsSerial.read()))// encode gps data
+{
+gps.f_get_position(&lat,&lon); // get latitude and longitude
+
+}
+}
+
+latitude = String(lat,6);
+longitude = String(lon,6);
+Serial.println(latitude+","+longitude);
+delay(2000);
+
+sendSms();
+}
+
+int delaytime = 10000;//10second
+int lasttime = 0;
+
+void sendSms(){
+if((millis() - lasttime) > delaytime){
+lasttime = millis();
+
+smstemplate();
+}
+}
+
+void smstemplate(){
+mSerial.begin(19200);
+mSerial.print("\r");
+delay(1000);
+mSerial.print("AT+CMGF=1\r");
+delay(1000);
+mSerial.print("AT+CSCS="GSM"\r");
+delay(1000);
+mSerial.print("AT+CMGS="+639953544501"\r");
+delay(1000);
+mSerial.print("My Location");
+mSerial.print("😊;
+mSerial.print("www.google.com.ph/maps/place/");
+mSerial.print(latitude);
+mSerial.print(",");
+mSerial.print(longitude);
+mSerial.print("\r");
+/mSerial.print("Hello iam a message\r");/
+delay(1000);
+mSerial.write(26);
+Serial.println("Sms Sent");
+}
